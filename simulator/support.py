@@ -146,4 +146,4 @@ def plot_mapping(
         plt.savefig(filename, bbox_inches='tight')
 
     # Shows plot
-    plt.show()
+    plt.clf()

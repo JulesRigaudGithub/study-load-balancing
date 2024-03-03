@@ -255,8 +255,29 @@ def lpt(
     # Empty mapping
     num_tasks = len(task_loads)
     mapping = [None] * num_tasks
-    # TODO
+    
+    # Sort all the jobs prior to the execution of list scheduling
+    # on this newly sorted sequence
+    sorted_tasks = sorted(range(num_tasks),
+                          key=lambda task:task_loads[task],
+                          reverse=True) 
 
+    # Prepares the min-heap for the resources
+    # Each item in the heap follows the convention (load, resource)
+    resource_heap = [(0, resource) for resource in range(num_resources)]
+    heapq.heapify(resource_heap)
+
+    # Iterates over tasks mapping them to the least loaded resource
+    for task in sorted_tasks:
+        # Finds the least loaded resource
+        resource_load, resource = heapq.heappop(resource_heap)
+        mapping[task] = resource
+        if verbose:
+            print(f'- Mapping task {task} to resource {resource}')
+        # Load of this task
+        load = task_loads[task]
+        # Updates the heap
+        heapq.heappush(resource_heap, (resource_load + load, resource))
     return mapping
 
 
@@ -297,7 +318,43 @@ def lpt_with_limits(
     # Empty mapping
     num_tasks = len(task_loads)
     mapping = [None] * num_tasks
-    # TODO
+
+    # Sort all the jobs prior to the execution of list scheduling
+    # on this newly sorted sequence
+    sorted_tasks = sorted(range(num_tasks),
+                          key=lambda task:task_loads[task],
+                          reverse=True) 
+
+    # Prepares the min-heap for the resources
+    # Each item in the heap follows the convention (load, resource)
+    resource_heap = [(0, resource) for resource in range(num_resources)]
+    heapq.heapify(resource_heap)
+
+    # Iterates over tasks mapping them to the least loaded resource
+    for task in sorted_tasks:
+        # Finds the least loaded resource
+        resource_load, resource = heapq.heappop(resource_heap)
+        # Waiting queue for reinserting previously popped values that
+        # do not meet the task limit requirement
+        waiting_queue = []
+        while mapping.count(resource) >= task_limit :
+            # At each step the new resource is tested for task limit
+            waiting_queue.append((resource_load, resource))
+            resource_load, resource = heapq.heappop(resource_heap)
+
+        mapping[task] = resource
+        
+        # all the unwanted resources need to be pushed back in the heap
+        for tup in waiting_queue[::-1]:
+            heapq.heappush(resource_heap, tup)
+        
+
+        if verbose:
+            print(f'- Mapping task {task} to resource {resource}')
+        # Load of this task
+        load = task_loads[task]
+        # Updates the heap
+        heapq.heappush(resource_heap, (resource_load + load, resource))
 
     return mapping
 
